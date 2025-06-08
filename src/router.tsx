@@ -11,7 +11,6 @@ export function createRouter() {
     defaultNotFoundComponent: () => <NotFound />,
     scrollRestoration: true,
     context: {
-      test: '123',
       auth: undefined! // This will be set after we wrap the app in an AuthProvider
     }
   })

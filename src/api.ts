@@ -16,21 +16,42 @@ import {
 import { createYoga, createSchema } from 'graphql-yoga'
 
 
-async function authenticateToken(c: Context, next: Next) {
-  const authHeader = c.req.header('Authorization');
-  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+// Middleware antigo baseado em Authorization header
+// async function authenticateToken(c: Context, next: Next) {
+//   const authHeader = c.req.header('Authorization');
+//   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+//
+//   if (!token) {
+//     return c.json({ error: 'Token não fornecido' }, 401);
+//   }
+//
+//   try {
+//     const payload = await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET || 'sua-chave-secreta'));
+//     c.set('user', payload); // Adiciona o payload ao contexto
+//     await next();
+//   } catch (error) {
+//     console.error('Erro ao verificar token:', error);
+//     return c.json({ error: 'Token inválido ou expirado' }, 403);
+//   }
+// }
+
+// NOVO: Middleware baseado em cookie
+export async function authenticateCookie(c: Context, next: Next) {
+  const cookie = c.req.header('Cookie') || ''
+  const match = cookie.match(/token=([^;]+)/)
+  const token = match ? match[1] : null
 
   if (!token) {
-    return c.json({ error: 'Token não fornecido' }, 401);
+    return c.json({ error: 'Token não fornecido' }, 401)
   }
 
   try {
-    const payload = await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET || 'sua-chave-secreta'));
-    c.set('user', payload); // Adiciona o payload ao contexto
-    await next();
+    const payload = await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET || 'sua-chave-secreta'))
+    c.set('user', payload) // Adiciona o payload ao contexto
+    await next()
   } catch (error) {
-    console.error('Erro ao verificar token:', error);
-    return c.json({ error: 'Token inválido ou expirado' }, 403);
+    console.error('Erro ao verificar token:', error)
+    return c.json({ error: 'Token inválido ou expirado' }, 403)
   }
 }
 
@@ -198,9 +219,12 @@ app.post('/api/login', async (c) => {
       .setExpirationTime('1h')
       .sign(new TextEncoder().encode(process.env.JWT_SECRET || 'sua-chave-secreta'));
 
+    console.log("token", token);
 
-    // Retorna o token no corpo da resposta
-    return c.json({ token });
+    // NOVO: Setar o token em um cookie HttpOnly
+    c.header('Set-Cookie', `token=${token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Strict; Secure`)
+    // return c.json({ token });
+    return c.json({ user: { id: user.id, email: user.email } });
 
   } catch (error) {
     console.error('Erro no login:', error);
@@ -208,8 +232,32 @@ app.post('/api/login', async (c) => {
   }
 });
 
+// NOVO: Endpoint para logout (limpa o cookie)
+app.post('/api/logout', async (c) => {
+  c.header('Set-Cookie', 'token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict; Secure')
+  return c.json({ ok: true })
+});
 
-app.post('/api/profile', authenticateToken, (c) => {
+// NOVO: Endpoint para retornar usuário autenticado
+app.get('/api/me', async (c) => {
+  const cookie = c.req.header('Cookie') || ''
+  const match = cookie.match(/token=([^;]+)/)
+  const token = match ? match[1] : null
+  if (!token) {
+    return c.json({ user: null })
+  }
+  try {
+    const payload = await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET || 'sua-chave-secreta'))
+    console.log("/api/me payload", payload);
+    // payload.payload: { userId, email, ... }
+    return c.json({ user: { id: payload.payload.userId, email: payload.payload.email } })
+  } catch (err) {
+    console.error("Error in /api/me", err);
+    return c.json({ user: null })
+  }
+});
+
+app.post('/api/profile', authenticateCookie, (c) => {
   // const user = c.get('user'); // Payload do JWT definido pelo middleware
 
   console.log("******c", c);
@@ -235,6 +283,12 @@ app.post('/api/profile', authenticateToken, (c) => {
 
   return c.json({ user });
 });
+
+// Exemplo de rota GET protegida
+app.get('/api/secret', authenticateCookie, (c) => {
+  const user = c.get<any>('user')
+  return c.json({ message: 'Você acessou uma rota protegida!', user })
+})
 
 // app.route('/auth', authRouter);
 

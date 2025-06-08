@@ -3,7 +3,8 @@ import {
   Link,
   Outlet,
   Scripts,
-  createRootRouteWithContext,
+  // createRootRouteWithContext,
+  createRootRoute,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import * as React from 'react'
@@ -12,20 +13,23 @@ import { NotFound } from '~/components/NotFound'
 import appCss from '~/styles/app.css?url'
 import { seo } from '~/utils/seo'
 
-import { AuthContext, AuthProvider, useAuth } from '@/context/auth-context'
+import { AuthProvider } from '@/context/auth-context2'
+// import { AuthContext, AuthProvider, useAuth } from '@/context/auth-context'
+
 
 // ADDED
-export interface RouterContext {
-  auth: AuthContext | null,
-  test: string | null
-  // authentication: {
-  //   isLogged: () => boolean;
-  //   getToken: () => string | null;
-  //   logout: () => void;
-  // };
-}
+// export interface RouterContext {
+//   auth: AuthContext | null,
+//   test: string | null
+//   // authentication: {
+//   //   isLogged: () => boolean;
+//   //   getToken: () => string | null;
+//   //   logout: () => void;
+//   // };
+// }
 
-export const Route = createRootRouteWithContext<RouterContext>()({
+// export const Route = createRootRouteWithContext<RouterContext>()({
+export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
@@ -76,14 +80,14 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 function RootComponent() {
-  const data = Route.useLoaderData();
-  const [isClient, setIsClient] = React.useState(false);
-  console.log("isClient", isClient);
-  console.log("data", data);
+  // const data = Route.useLoaderData();
+  // const [isClient, setIsClient] = React.useState(false);
+  // console.log("isClient", isClient);
+  // console.log("data", data);
 
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // React.useEffect(() => {
+  //   setIsClient(true);
+  // }, []);
 
   return (
     <AuthProvider>

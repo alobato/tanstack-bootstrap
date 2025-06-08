@@ -4,7 +4,7 @@ import { customersGet } from '@/db/customer.model'
 import { createServerFn } from '@tanstack/react-start'
 import { dbMiddleware } from '@/lib/db-middleware'
 
-const getCustomers = createServerFn({ method: 'GET' })
+const getCustomers = createServerFn({method: 'GET'})
   .middleware([dbMiddleware])
   .handler(async (ctx) => {
     const result = await customersGet(ctx.context.db)
