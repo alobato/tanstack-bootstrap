@@ -3,7 +3,7 @@ import {
   Link,
   Outlet,
   Scripts,
-  createRootRoute,
+  createRootRouteWithContext,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import * as React from 'react'
@@ -12,7 +12,20 @@ import { NotFound } from '~/components/NotFound'
 import appCss from '~/styles/app.css?url'
 import { seo } from '~/utils/seo'
 
-export const Route = createRootRoute({
+import { AuthContext, AuthProvider, useAuth } from '@/context/auth-context'
+
+// ADDED
+export interface RouterContext {
+  auth: AuthContext | null,
+  test: string | null
+  // authentication: {
+  //   isLogged: () => boolean;
+  //   getToken: () => string | null;
+  //   logout: () => void;
+  // };
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       {
@@ -63,10 +76,21 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  const data = Route.useLoaderData();
+  const [isClient, setIsClient] = React.useState(false);
+  console.log("isClient", isClient);
+  console.log("data", data);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
+    <AuthProvider>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    </AuthProvider>
   )
 }
 

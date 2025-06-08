@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vinxi dev",
-    "build": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide && vinxi build",
-    "start": "vinxi start",
-    "deploy": "pnpm run build && npx wrangler deploy --minify ./.output/server/index.mjs"
+    "build": "vinxi build",
+    "start": "vinxi start"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.7",
